@@ -1,0 +1,13 @@
+/vendor/
+/.phpunit.cache/
+/.phpstan-cache/
+/.phpunit.result.cache
+/.php-cs-fixer.cache
+/.idea/*
+!/.idea/php.xml
+!/.idea/runConfigurations/
+!/.idea/runConfigurations/*.xml
+/.env
+composer.phar
+/phpunit.phar
+.DS_Store
