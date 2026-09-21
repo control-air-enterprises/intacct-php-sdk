@@ -6,7 +6,9 @@ namespace ControlAir\Intacct\Tests\Integration;
 
 use ControlAir\Intacct\Auth\OAuth\ClientCredentialsGrant;
 use ControlAir\Intacct\Auth\OAuth\OAuthClient;
+use ControlAir\Intacct\Auth\Tokens\StaticAccessTokenProvider;
 use ControlAir\Intacct\Configuration\OAuthApplication;
+use ControlAir\Intacct\IntacctClient;
 use ControlAir\Intacct\Support\SystemClock;
 use Dotenv\Dotenv;
 use GuzzleHttp\Client;
@@ -17,7 +19,7 @@ use PHPUnit\Framework\TestCase;
 #[Group('integration')]
 final class LiveOAuthTest extends TestCase
 {
-    public function test_client_credentials_token_can_be_issued_and_introspected(): void
+    public function test_client_credentials_token_can_authenticate_a_read_only_api_request(): void
     {
         Dotenv::createImmutable(dirname(__DIR__, 2))->safeLoad();
 
@@ -28,12 +30,13 @@ final class LiveOAuthTest extends TestCase
         $entityId = $this->optionalEnvironmentValue('SAGE_INTACCT_ENTITY_ID');
 
         $factory = new HttpFactory;
+        $http = new Client([
+            'connect_timeout' => 10,
+            'timeout' => 30,
+        ]);
         $oauth = new OAuthClient(
             application: new OAuthApplication($clientId, $clientSecret),
-            httpClient: new Client([
-                'connect_timeout' => 10,
-                'timeout' => 30,
-            ]),
+            httpClient: $http,
             requestFactory: $factory,
             streamFactory: $factory,
             clock: new SystemClock,
@@ -47,12 +50,16 @@ final class LiveOAuthTest extends TestCase
 
         self::assertGreaterThan(time(), $tokens->expiresAt->getTimestamp());
 
-        $introspection = $oauth->introspect($tokens->accessToken);
+        $client = new IntacctClient(
+            tokens: new StaticAccessTokenProvider($tokens->accessToken),
+            httpClient: $http,
+            requestFactory: $factory,
+            streamFactory: $factory,
+        );
+        $catalog = $client->dimensions->list();
 
-        self::assertTrue($introspection->active);
-        self::assertSame($clientId, $introspection->clientId);
-        self::assertSame($userId, $introspection->userId);
-        self::assertSame($companyId, $introspection->companyId);
+        self::assertNotEmpty($catalog->dimensions);
+        self::assertSame(count($catalog->dimensions), $catalog->meta->totalCount);
     }
 
     private function requiredEnvironmentValue(string $key): string

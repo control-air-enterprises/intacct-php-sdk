@@ -277,4 +277,4 @@ SAGE_INTACCT_COMPANY_ID=your-company-id
 SAGE_INTACCT_ENTITY_ID=optional-entity-id
 ```
 
-The live test requests a token and introspects it. It does not call business-data endpoints, mutate Sage data, print credentials, or revoke the token. If any required value is absent, PHPUnit marks the integration test as skipped. The `.env` file is ignored by Git.
+The live test requests a token and uses it to read and map the company dimension catalog. This verifies both authentication and a real REST API request without mutating Sage data, printing credentials, introspecting, or revoking the token. If any required value is absent, PHPUnit marks the integration test as skipped. The `.env` file is ignored by Git.
