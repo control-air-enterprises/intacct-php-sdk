@@ -85,7 +85,16 @@ GL accounts are read-only for the same reason as entities: chart-of-accounts cha
 | `model` | `services/core/model` | Describe objects, fields, relationships, and custom fields |
 | `queries` | `services/core/query` | Raw queries with arbitrary field lists |
 
-`ResourceGateway` also supports batch writes of up to 500 records (`createMany`, `updateMany`, `deleteMany`), optionally atomic through `X-IA-API-Param-Transaction`, and `Idempotency-Key` headers on create and update.
+Every writable client also exposes:
+
+- an optional `IdempotencyKey` on `create()` and `update()`, sent as the `Idempotency-Key` header;
+- `createMany()` and `deleteMany()` for batches of up to 500 records, optionally atomic through `X-IA-API-Param-Transaction`.
+
+`ResourceGateway::updateMany()` exists for keyed batch updates but is not yet exposed through the typed clients.
+
+## Custom fields
+
+Custom fields are top-level `nsp::` keys. Response DTOs expose them through `customFields`, create DTOs take a `CustomFields` set, and update DTOs offer `customField()`/`withCustomField()`. Select custom fields in queries with `ResourceQuery::withFields('nsp::NAME')`. User-defined dimensions are `nsp::` references inside a line's `dimensions` object and are exposed through `Dimensions::$custom`. A reflection test in `tests/CustomFields` fails if a new resource DTO omits custom-field support.
 
 ## Query results
 
@@ -99,6 +108,7 @@ Add a new resource beneath `src/Resources/<SageDomain>/<Resource>`, expose it th
 2. separate immutable create and update DTOs;
 3. a client backed by `ResourceGateway`;
 4. a fixed default query field list containing every field required by its mapper;
-5. transport-level fixture tests for read, query, and supported mutations.
+5. transport-level fixture tests for read, query, and supported mutations;
+6. custom-field support: `customFields` on the response DTO, a `CustomFields` argument on the create DTO, and `withCustomField()` on the update DTO.
 
 Do not read environment variables or resolve framework services inside a resource module. Applications construct `IntacctClient` directly or through their own framework service provider.

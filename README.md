@@ -332,6 +332,51 @@ $http = new RetryingHttpClient(
 - HTTP 429 is retried for every method, honoring `Retry-After` and Sage's `X-IA-*-Retry-After` headers.
 - HTTP 5xx and network errors are retried for GET, HEAD, OPTIONS, and DELETE, and for a POST or PATCH carrying an `Idempotency-Key`. Other writes are never resent, so a request that timed out after Sage processed it cannot create a duplicate.
 
+### Batch writes and idempotency
+
+Every writable client accepts an optional `IdempotencyKey` on `create()` and `update()`. Sage returns the original result for a repeated key for 48 hours, so a timed-out write can be retried safely; `RetryingHttpClient` retries keyed writes automatically.
+
+```php
+use ControlAir\Intacct\Core\Http\IdempotencyKey;
+
+$intacct->purchasing->documents('Purchase Order')->create($order, IdempotencyKey::generate());
+```
+
+`createMany()` and `deleteMany()` send up to 500 records in one request. Batches are non-atomic by default; pass `atomic: true` to roll back the whole batch when any record fails. Results are matched to the submitted records by position.
+
+```php
+$result = $intacct->inventory->productLines->createMany([$tools, $fasteners], atomic: true);
+
+foreach ($result->failures() as $failure) {
+    echo $failure->position, ': ', $failure->error?->message, PHP_EOL;
+}
+```
+
+### Custom fields
+
+Sage exposes custom fields as `nsp::` keys beside standard fields. Every typed resource reads them into `customFields`, create DTOs accept a `CustomFields` set, and update DTOs add `withCustomField()`. Names work with or without the prefix, and `null` clears a field on update.
+
+```php
+use ControlAir\Intacct\ValueObjects\CustomFields;
+
+$vendor = $intacct->accountsPayable->vendors->get(new ObjectKey('23'));
+$vendor->customFields->get('PICKLIST');
+
+$items = $intacct->inventory->items->query((new ResourceQuery)->withFields('nsp::COLOR'));
+
+$intacct->inventory->items->create(new CreateItem(
+    id: new ObjectId('HAMMER16'),
+    name: 'Hammer',
+    itemType: ItemType::Inventory,
+    costMethod: CostMethod::Average,
+    customFields: (new CustomFields)->with('COLOR', 'red'),
+));
+
+$intacct->accountsPayable->vendors->update($vendor->key, UpdateVendor::customField('CUSTOM_EMAIL', null));
+```
+
+User-defined dimensions on transaction lines are available through `$line->dimensions->userDefined('<name>')` and can be written through `new Dimensions(custom: ...)`. On purchasing documents, custom fields exist only on the named document type, which is how `documents('<name>')` addresses them.
+
 ### Composite requests
 
 A composite request runs 2 to 10 operations in order and can feed one result into a later operation. Execution stops at the first failure, and earlier operations are **not** rolled back.
