@@ -164,6 +164,29 @@ final class RetryingHttpClientTest extends TestCase
         self::assertSame([], $this->sleeper->delays);
     }
 
+    #[DataProvider('nonIdempotentMethods')]
+    public function test_it_retries_server_errors_for_requests_with_an_idempotency_key(string $method): void
+    {
+        $http = new QueueHttpClient(new Response(503), new Response(200));
+        $request = new Request($method, self::URI, ['Idempotency-Key' => 'po-1'], '{"id":"PO-1"}');
+
+        $response = $this->client($http)->sendRequest($request);
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertCount(2, $http->requests);
+    }
+
+    public function test_it_retries_a_network_error_for_a_post_with_an_idempotency_key(): void
+    {
+        $request = new Request('POST', self::URI, ['Idempotency-Key' => 'po-1'], '{"id":"PO-1"}');
+        $http = new QueueHttpClient(new ConnectException('Connection reset', $request), new Response(201));
+
+        $response = $this->client($http)->sendRequest($request);
+
+        self::assertSame(201, $response->getStatusCode());
+        self::assertCount(2, $http->requests);
+    }
+
     #[DataProvider('nonRetryableStatuses')]
     public function test_it_returns_non_retryable_responses_immediately(int $status): void
     {

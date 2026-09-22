@@ -55,13 +55,18 @@ final readonly class RetryPolicy
         return in_array(strtoupper($method), self::IDEMPOTENT_METHODS, true);
     }
 
-    public function isRetryableStatus(string $method, int $statusCode): bool
+    /**
+     * @param  bool  $hasIdempotencyKey  Sage replays the cached result for a repeated Idempotency-Key,
+     *                                   so a keyed POST or PATCH is as safe to resend as a GET.
+     */
+    public function isRetryableStatus(string $method, int $statusCode, bool $hasIdempotencyKey = false): bool
     {
         if ($statusCode === self::TOO_MANY_REQUESTS) {
             return true;
         }
 
-        return in_array($statusCode, self::RETRYABLE_SERVER_ERRORS, true) && $this->isIdempotent($method);
+        return in_array($statusCode, self::RETRYABLE_SERVER_ERRORS, true)
+            && ($hasIdempotencyKey || $this->isIdempotent($method));
     }
 
     /**

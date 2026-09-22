@@ -6,6 +6,7 @@ namespace ControlAir\Intacct;
 
 use ControlAir\Intacct\Auth\Contracts\AccessTokenProvider;
 use ControlAir\Intacct\Configuration\ApiConfiguration;
+use ControlAir\Intacct\Core\Composite\CompositeClient;
 use ControlAir\Intacct\Core\Http\ApiTransport;
 use ControlAir\Intacct\Core\Model\ModelClient;
 use ControlAir\Intacct\Core\Query\QueryClient;
@@ -38,6 +39,8 @@ final readonly class IntacctClient
     public QueryClient $queries;
 
     public ModelClient $model;
+
+    public CompositeClient $composite;
 
     public ProjectsClient $projects;
 
@@ -91,6 +94,7 @@ final readonly class IntacctClient
         );
         $this->queries = new QueryClient($this->transport);
         $this->model = new ModelClient($this->transport);
+        $this->composite = new CompositeClient($this->transport);
         $this->projects = new ProjectsClient($this->transport, $this->queries);
         $this->tasks = new TasksClient($this->transport, $this->queries);
         $this->costTypes = new CostTypesClient($this->transport, $this->queries);
