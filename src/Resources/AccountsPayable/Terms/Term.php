@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ControlAir\Intacct\Resources\AccountsPayable\Terms;
 
 use ControlAir\Intacct\Support\ArrayReader;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\ObjectId;
 use ControlAir\Intacct\ValueObjects\ObjectKey;
 use ControlAir\Intacct\ValueObjects\RecordStatus;
@@ -20,6 +21,7 @@ final readonly class Term
         public ?TermDiscount $discount,
         public ?TermPenalty $penalty,
         public ?string $href,
+        public CustomFields $customFields = new CustomFields,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -39,6 +41,7 @@ final readonly class Term
             discount: $discount === null ? null : TermDiscount::fromArray($discount),
             penalty: $penalty === null ? null : TermPenalty::fromArray($penalty),
             href: ArrayReader::string($data, 'href'),
+            customFields: CustomFields::fromArray($data),
         );
     }
 }

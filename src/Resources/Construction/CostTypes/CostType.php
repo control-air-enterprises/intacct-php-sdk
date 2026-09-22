@@ -6,6 +6,7 @@ namespace ControlAir\Intacct\Resources\Construction\CostTypes;
 
 use ControlAir\Intacct\Exceptions\MappingException;
 use ControlAir\Intacct\Support\ArrayReader;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\LocalDate;
 use ControlAir\Intacct\ValueObjects\ObjectId;
 use ControlAir\Intacct\ValueObjects\ObjectKey;
@@ -34,6 +35,7 @@ final readonly class CostType
         public ?LocalDate $actualStartDate,
         public ?LocalDate $actualEndDate,
         public ?string $href,
+        public CustomFields $customFields = new CustomFields,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -70,6 +72,7 @@ final readonly class CostType
             actualStartDate: $actual === null ? null : ArrayReader::date($actual, 'startDate'),
             actualEndDate: $actual === null ? null : ArrayReader::date($actual, 'endDate'),
             href: ArrayReader::string($data, 'href'),
+            customFields: CustomFields::fromArray($data),
         );
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ControlAir\Intacct\Resources\CompanyConfiguration\Departments;
 
 use ControlAir\Intacct\Support\ArrayReader;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\ObjectId;
 use ControlAir\Intacct\ValueObjects\ObjectKey;
 use ControlAir\Intacct\ValueObjects\ObjectReference;
@@ -21,6 +22,7 @@ final readonly class Department
         public ?ObjectReference $parent,
         public ?ObjectReference $supervisor,
         public ?string $href,
+        public CustomFields $customFields = new CustomFields,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -37,6 +39,7 @@ final readonly class Department
             parent: ArrayReader::reference($data, 'parent'),
             supervisor: ArrayReader::reference($data, 'supervisor'),
             href: ArrayReader::string($data, 'href'),
+            customFields: CustomFields::fromArray($data),
         );
     }
 }

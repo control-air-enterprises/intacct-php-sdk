@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ControlAir\Intacct\Resources\CompanyConfiguration\Employees;
 
 use ControlAir\Intacct\Support\Assert;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\LocalDate;
 use ControlAir\Intacct\ValueObjects\ObjectId;
 use ControlAir\Intacct\ValueObjects\ObjectReference;
@@ -30,6 +31,7 @@ final readonly class CreateEmployee
         public ?string $defaultCurrency = null,
         public ?SensitiveString $ssn = null,
         public ?bool $placeholderResource = null,
+        public CustomFields $customFields = new CustomFields,
     ) {
         Assert::notBlank($this->name, 'The employee name');
     }
@@ -37,7 +39,7 @@ final readonly class CreateEmployee
     /** @return array<string, mixed> */
     public function toArray(): array
     {
-        return array_filter([
+        $payload = array_filter([
             'id' => $this->id->value,
             'name' => $this->name,
             'jobTitle' => $this->jobTitle,
@@ -55,5 +57,7 @@ final readonly class CreateEmployee
             'SSN' => $this->ssn?->reveal(),
             'isPlaceholderResource' => $this->placeholderResource,
         ], static fn (mixed $value): bool => $value !== null);
+
+        return [...$payload, ...$this->customFields->toWriteArray()];
     }
 }

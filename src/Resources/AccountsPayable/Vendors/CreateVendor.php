@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ControlAir\Intacct\Resources\AccountsPayable\Vendors;
 
 use ControlAir\Intacct\Support\Assert;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\Decimal;
 use ControlAir\Intacct\ValueObjects\ObjectId;
 use ControlAir\Intacct\ValueObjects\ObjectReference;
@@ -25,6 +26,7 @@ final readonly class CreateVendor
         public ?Decimal $creditLimit = null,
         public ?bool $onHold = null,
         public ?string $notes = null,
+        public CustomFields $customFields = new CustomFields,
     ) {
         Assert::notBlank($this->name, 'The vendor name');
     }
@@ -32,7 +34,7 @@ final readonly class CreateVendor
     /** @return array<string, mixed> */
     public function toArray(): array
     {
-        return array_filter([
+        $payload = array_filter([
             'id' => $this->id->value,
             'name' => $this->name,
             'status' => $this->status?->value,
@@ -46,5 +48,7 @@ final readonly class CreateVendor
             'isOnHold' => $this->onHold,
             'notes' => $this->notes,
         ], static fn (mixed $value): bool => $value !== null);
+
+        return [...$payload, ...$this->customFields->toWriteArray()];
     }
 }

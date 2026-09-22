@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ControlAir\Intacct\Resources\AccountsPayable\Terms;
 
 use ControlAir\Intacct\Support\Assert;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\ObjectId;
 use ControlAir\Intacct\ValueObjects\RecordStatus;
 
@@ -17,6 +18,7 @@ final readonly class CreateTerm
         public ?TermDue $due = null,
         public ?TermDiscount $discount = null,
         public ?TermPenalty $penalty = null,
+        public CustomFields $customFields = new CustomFields,
     ) {
         Assert::notBlank($this->description, 'The term description');
     }
@@ -24,7 +26,7 @@ final readonly class CreateTerm
     /** @return array<string, mixed> */
     public function toArray(): array
     {
-        return array_filter([
+        $payload = array_filter([
             'id' => $this->id->value,
             'description' => $this->description,
             'status' => $this->status?->value,
@@ -32,5 +34,7 @@ final readonly class CreateTerm
             'discount' => $this->discount?->toArray(),
             'penalty' => $this->penalty?->toArray(),
         ], static fn (mixed $value): bool => $value !== null);
+
+        return [...$payload, ...$this->customFields->toWriteArray()];
     }
 }

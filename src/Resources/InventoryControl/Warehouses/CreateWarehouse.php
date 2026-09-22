@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ControlAir\Intacct\Resources\InventoryControl\Warehouses;
 
 use ControlAir\Intacct\Support\Assert;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\ObjectId;
 use ControlAir\Intacct\ValueObjects\ObjectReference;
 use ControlAir\Intacct\ValueObjects\RecordStatus;
@@ -20,6 +21,7 @@ final readonly class CreateWarehouse
         public ?ObjectReference $manager = null,
         public ?bool $replenishmentEnabled = null,
         public ?bool $negativeInventoryEnabled = null,
+        public CustomFields $customFields = new CustomFields,
     ) {
         Assert::notBlank($this->name, 'The warehouse name');
     }
@@ -27,7 +29,7 @@ final readonly class CreateWarehouse
     /** @return array<string, mixed> */
     public function toArray(): array
     {
-        return array_filter([
+        $payload = array_filter([
             'id' => $this->id->value,
             'name' => $this->name,
             'location' => $this->location->toWriteArray(),
@@ -37,5 +39,7 @@ final readonly class CreateWarehouse
             'isReplenishmentEnabled' => $this->replenishmentEnabled,
             'enableNegativeInv' => $this->negativeInventoryEnabled,
         ], static fn (mixed $value): bool => $value !== null);
+
+        return [...$payload, ...$this->customFields->toWriteArray()];
     }
 }

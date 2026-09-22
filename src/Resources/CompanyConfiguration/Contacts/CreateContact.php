@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ControlAir\Intacct\Resources\CompanyConfiguration\Contacts;
 
 use ControlAir\Intacct\Support\Assert;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\MailingAddress;
 use ControlAir\Intacct\ValueObjects\ObjectId;
 use ControlAir\Intacct\ValueObjects\ObjectReference;
@@ -39,6 +40,7 @@ final readonly class CreateContact
         public ?bool $taxable = null,
         public ?ObjectReference $taxGroup = null,
         public ?SensitiveString $taxId = null,
+        public CustomFields $customFields = new CustomFields,
     ) {
         Assert::notBlank($this->printAs, 'The contact print-as name');
     }
@@ -52,7 +54,7 @@ final readonly class CreateContact
             'group' => $this->taxGroup?->toWriteArray(),
         ], static fn (mixed $value): bool => $value !== null);
 
-        return array_filter([
+        $payload = array_filter([
             'id' => $this->id->value,
             'printAs' => $this->printAs,
             'prefix' => $this->prefix,
@@ -73,5 +75,7 @@ final readonly class CreateContact
             'mailingAddress' => $this->mailingAddress?->toWriteArray(),
             'tax' => $tax === [] ? null : $tax,
         ], static fn (mixed $value): bool => $value !== null);
+
+        return [...$payload, ...$this->customFields->toWriteArray()];
     }
 }
