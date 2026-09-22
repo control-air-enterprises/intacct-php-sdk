@@ -32,6 +32,30 @@ final readonly class ResourceQuery
         }
     }
 
+    public function withStart(int $start): self
+    {
+        return new self(
+            filters: $this->filters,
+            filterExpression: $this->filterExpression,
+            filterParameters: $this->filterParameters,
+            orderBy: $this->orderBy,
+            start: $start,
+            size: $this->size,
+        );
+    }
+
+    public function withSize(int $size): self
+    {
+        return new self(
+            filters: $this->filters,
+            filterExpression: $this->filterExpression,
+            filterParameters: $this->filterParameters,
+            orderBy: $this->orderBy,
+            start: $this->start,
+            size: $size,
+        );
+    }
+
     /** @param non-empty-list<string> $fields */
     public function select(array $fields): Query
     {

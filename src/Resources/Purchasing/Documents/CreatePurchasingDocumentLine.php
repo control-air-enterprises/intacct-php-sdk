@@ -14,6 +14,7 @@ final readonly class CreatePurchasingDocumentLine
     /**
      * @param  string  $unit  The unit of measure name, such as "Each".
      * @param  Dimensions|null  $dimensions  Additional dimensions; the item, warehouse and location arguments take precedence.
+     * @param  ObjectReference|null  $sourceDocument  The document that owns $sourceDocumentLine when converting.
      * @param  ObjectReference|null  $sourceDocumentLine  The line being converted, such as a purchase order line on a receipt.
      */
     public function __construct(
@@ -26,6 +27,7 @@ final readonly class CreatePurchasingDocumentLine
         public ?Dimensions $dimensions = null,
         public ?string $lineDescription = null,
         public ?string $memo = null,
+        public ?ObjectReference $sourceDocument = null,
         public ?ObjectReference $sourceDocumentLine = null,
     ) {
         Assert::notBlank($this->unit, 'The line unit');
@@ -46,6 +48,7 @@ final readonly class CreatePurchasingDocumentLine
             ],
             'lineDescription' => $this->lineDescription,
             'memo' => $this->memo,
+            'sourceDocument' => $this->sourceDocument?->toWriteArray(),
             'sourceDocumentLine' => $this->sourceDocumentLine?->toWriteArray(),
         ], static fn (mixed $value): bool => $value !== null);
     }
