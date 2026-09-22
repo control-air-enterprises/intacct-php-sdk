@@ -147,9 +147,11 @@ final class PurchasingDocumentsClientTest extends ApiTestCase
             unit: 'Each',
             unitQuantity: new Decimal('5'),
             unitPrice: new Decimal('9.25'),
+            sourceDocument: ObjectReference::byKey('10'),
             sourceDocumentLine: ObjectReference::byKey('46'),
         );
 
+        self::assertSame(['key' => '10'], $line->toArray()['sourceDocument']);
         self::assertSame(['key' => '46'], $line->toArray()['sourceDocumentLine']);
     }
 

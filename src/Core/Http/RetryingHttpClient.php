@@ -26,6 +26,13 @@ use Random\Randomizer;
  */
 final readonly class RetryingHttpClient implements ClientInterface
 {
+    /** Checked in order; the first non-empty header wins. */
+    private const RETRY_AFTER_HEADERS = [
+        'Retry-After',
+        'X-IA-Throttle-Limit-Retry-After',
+        'X-IA-Hour-Rate-Limit-Retry-After',
+    ];
+
     /**
      * IMF-fixdate followed by the obsolete RFC 850 and asctime() forms (RFC 9110, section 5.6.7).
      */
@@ -98,10 +105,19 @@ final readonly class RetryingHttpClient implements ClientInterface
 
     /**
      * Returns the Retry-After delay in milliseconds, capped by the policy, or null when absent or invalid.
+     * Sage's own throttle headers are used when the standard header is missing.
      */
     private function retryAfter(ResponseInterface $response): ?int
     {
-        $value = trim($response->getHeaderLine('Retry-After'));
+        $value = '';
+
+        foreach (self::RETRY_AFTER_HEADERS as $header) {
+            $value = trim($response->getHeaderLine($header));
+
+            if ($value !== '') {
+                break;
+            }
+        }
 
         if ($value === '') {
             return null;

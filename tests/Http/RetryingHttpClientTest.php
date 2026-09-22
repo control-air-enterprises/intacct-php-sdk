@@ -58,6 +58,19 @@ final class RetryingHttpClientTest extends TestCase
         self::assertSame([3000], $this->sleeper->delays);
     }
 
+    public function test_it_falls_back_to_sage_throttle_headers(): void
+    {
+        $http = new QueueHttpClient(
+            new Response(429, ['X-IA-Throttle-Limit-Retry-After' => '2']),
+            new Response(429, ['X-IA-Hour-Rate-Limit-Retry-After' => '4', 'Retry-After' => '1']),
+            new Response(200),
+        );
+
+        $this->client($http)->sendRequest(new Request('POST', self::URI));
+
+        self::assertSame([2000, 1000], $this->sleeper->delays);
+    }
+
     public function test_it_honors_retry_after_as_an_http_date(): void
     {
         $http = new QueueHttpClient(
