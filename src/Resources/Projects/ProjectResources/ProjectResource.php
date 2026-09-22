@@ -6,6 +6,7 @@ namespace ControlAir\Intacct\Resources\Projects\ProjectResources;
 
 use ControlAir\Intacct\Exceptions\MappingException;
 use ControlAir\Intacct\Support\ArrayReader;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\LocalDate;
 use ControlAir\Intacct\ValueObjects\ObjectId;
 use ControlAir\Intacct\ValueObjects\ObjectKey;
@@ -24,6 +25,7 @@ final readonly class ProjectResource
         public ?LocalDate $startDate,
         public ?ProjectResourcePricing $pricing,
         public ?string $href,
+        public CustomFields $customFields = new CustomFields,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -47,6 +49,7 @@ final readonly class ProjectResource
             startDate: ArrayReader::date($data, 'startDate'),
             pricing: $pricing === null ? null : ProjectResourcePricing::fromArray($pricing),
             href: ArrayReader::string($data, 'href'),
+            customFields: CustomFields::fromArray($data),
         );
     }
 }

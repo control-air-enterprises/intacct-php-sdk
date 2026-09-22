@@ -21,7 +21,8 @@ use Random\Randomizer;
  *
  * - HTTP 429 is retried for every method, honoring Retry-After.
  * - HTTP 500/502/503/504 and network errors are retried only for GET, HEAD, OPTIONS and DELETE,
- *   so a POST or PATCH that may already have been processed is never sent twice.
+ *   or for a POST or PATCH carrying an Idempotency-Key, so a request that may already have been
+ *   processed is never applied twice.
  * - Requests whose body cannot be rewound are never retried.
  */
 final readonly class RetryingHttpClient implements ClientInterface
@@ -58,7 +59,7 @@ final readonly class RetryingHttpClient implements ClientInterface
             try {
                 $response = $this->client->sendRequest($request);
             } catch (NetworkExceptionInterface $exception) {
-                if (! $this->policy->isIdempotent($request->getMethod()) || ! $this->canRetry($request, $retry)) {
+                if (! $this->isSafeToResend($request) || ! $this->canRetry($request, $retry)) {
                     throw $exception;
                 }
 
@@ -67,13 +68,23 @@ final readonly class RetryingHttpClient implements ClientInterface
                 continue;
             }
 
-            if (! $this->policy->isRetryableStatus($request->getMethod(), $response->getStatusCode())
-                || ! $this->canRetry($request, $retry)) {
+            $retryable = $this->policy->isRetryableStatus(
+                $request->getMethod(),
+                $response->getStatusCode(),
+                $request->hasHeader(IdempotencyKey::HEADER),
+            );
+
+            if (! $retryable || ! $this->canRetry($request, $retry)) {
                 return $response;
             }
 
             $this->pause(++$retry, $response);
         }
+    }
+
+    private function isSafeToResend(RequestInterface $request): bool
+    {
+        return $this->policy->isIdempotent($request->getMethod()) || $request->hasHeader(IdempotencyKey::HEADER);
     }
 
     /**

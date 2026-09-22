@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ControlAir\Intacct\Resources\InventoryControl\Items;
 
 use ControlAir\Intacct\Support\Assert;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\Decimal;
 use ControlAir\Intacct\ValueObjects\ObjectId;
 use ControlAir\Intacct\ValueObjects\ObjectReference;
@@ -26,6 +27,7 @@ final readonly class CreateItem
         public ?Decimal $standardCost = null,
         public ?Decimal $basePrice = null,
         public ?bool $taxable = null,
+        public CustomFields $customFields = new CustomFields,
     ) {
         Assert::notBlank($this->name, 'The item name');
     }
@@ -38,7 +40,7 @@ final readonly class CreateItem
             'isTaxable' => $this->taxable,
         ], static fn (mixed $value): bool => $value !== null);
 
-        return array_filter([
+        $payload = array_filter([
             'id' => $this->id->value,
             'name' => $this->name,
             'itemType' => $this->itemType->value,
@@ -52,5 +54,7 @@ final readonly class CreateItem
             'purchasing' => $this->standardCost === null ? null : ['standardCost' => $this->standardCost->value],
             'sales' => $sales === [] ? null : $sales,
         ], static fn (mixed $value): bool => $value !== null);
+
+        return [...$payload, ...$this->customFields->toWriteArray()];
     }
 }

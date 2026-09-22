@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ControlAir\Intacct\Resources\InventoryControl\Warehouses;
 
 use ControlAir\Intacct\Support\ArrayReader;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\ObjectId;
 use ControlAir\Intacct\ValueObjects\ObjectKey;
 use ControlAir\Intacct\ValueObjects\ObjectReference;
@@ -23,6 +24,7 @@ final readonly class Warehouse
         public ?bool $replenishmentEnabled,
         public ?bool $negativeInventoryEnabled,
         public ?string $href,
+        public CustomFields $customFields = new CustomFields,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -41,6 +43,7 @@ final readonly class Warehouse
             replenishmentEnabled: ArrayReader::bool($data, 'isReplenishmentEnabled'),
             negativeInventoryEnabled: ArrayReader::bool($data, 'enableNegativeInv'),
             href: ArrayReader::string($data, 'href'),
+            customFields: CustomFields::fromArray($data),
         );
     }
 }

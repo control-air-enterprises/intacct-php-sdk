@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ControlAir\Intacct\Resources\Purchasing\Documents;
 
 use ControlAir\Intacct\Support\ArrayReader;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\Decimal;
 use ControlAir\Intacct\ValueObjects\Dimensions;
 use ControlAir\Intacct\ValueObjects\ObjectKey;
@@ -25,6 +26,7 @@ final readonly class PurchasingDocumentLine
         public Dimensions $dimensions,
         public ?ObjectReference $sourceDocumentLine,
         public ?string $href,
+        public CustomFields $customFields = new CustomFields,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -45,6 +47,7 @@ final readonly class PurchasingDocumentLine
             dimensions: Dimensions::fromArray($dimensions),
             sourceDocumentLine: ArrayReader::reference($data, 'sourceDocumentLine'),
             href: ArrayReader::string($data, 'href'),
+            customFields: CustomFields::fromArray($data),
         );
     }
 }
