@@ -8,6 +8,7 @@ use ControlAir\Intacct\Auth\Contracts\AccessTokenProvider;
 use ControlAir\Intacct\Configuration\ApiConfiguration;
 use ControlAir\Intacct\Core\Http\ApiTransport;
 use ControlAir\Intacct\Core\Query\QueryClient;
+use ControlAir\Intacct\Resources\AccountsPayable\AccountsPayable;
 use ControlAir\Intacct\Resources\CompanyConfiguration\Classes\ClassesClient;
 use ControlAir\Intacct\Resources\CompanyConfiguration\Departments\DepartmentsClient;
 use ControlAir\Intacct\Resources\CompanyConfiguration\Dimensions\DimensionsClient;
@@ -16,9 +17,11 @@ use ControlAir\Intacct\Resources\CompanyConfiguration\Entities\EntitiesClient;
 use ControlAir\Intacct\Resources\CompanyConfiguration\Locations\LocationsClient;
 use ControlAir\Intacct\Resources\CompanyConfiguration\Users\UsersClient;
 use ControlAir\Intacct\Resources\Construction\CostTypes\CostTypesClient;
+use ControlAir\Intacct\Resources\InventoryControl\InventoryControl;
 use ControlAir\Intacct\Resources\Projects\ProjectResources\ProjectResourcesClient;
 use ControlAir\Intacct\Resources\Projects\ProjectsClient;
 use ControlAir\Intacct\Resources\Projects\Tasks\TasksClient;
+use ControlAir\Intacct\Resources\Purchasing\Purchasing;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
@@ -51,6 +54,12 @@ final readonly class IntacctClient
 
     public UsersClient $users;
 
+    public AccountsPayable $accountsPayable;
+
+    public InventoryControl $inventory;
+
+    public Purchasing $purchasing;
+
     public function __construct(
         AccessTokenProvider $tokens,
         ClientInterface $httpClient,
@@ -77,5 +86,8 @@ final readonly class IntacctClient
         $this->locations = new LocationsClient($this->transport, $this->queries);
         $this->entities = new EntitiesClient($this->transport, $this->queries);
         $this->users = new UsersClient($this->transport, $this->queries);
+        $this->accountsPayable = new AccountsPayable($this->transport, $this->queries);
+        $this->inventory = new InventoryControl($this->transport, $this->queries);
+        $this->purchasing = new Purchasing($this->transport, $this->queries);
     }
 }

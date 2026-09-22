@@ -46,7 +46,7 @@ final readonly class ResourceGateway
         $items = [];
 
         foreach ($page->items as $item) {
-            $items[] = ($this->mapper)($item);
+            $items[] = ($this->mapper)(self::expandDottedKeys($item));
         }
 
         return new Page($items, $page->meta);
@@ -80,6 +80,63 @@ final readonly class ResourceGateway
                 $this->path.'/'.rawurlencode($key->value),
             ),
         );
+    }
+
+    /**
+     * Query rows return related fields as flat keys such as "parent.id", while object
+     * reads nest them. Expanding the keys lets one mapper handle both shapes.
+     *
+     * @param  array<string, mixed>  $row
+     * @return array<string, mixed>
+     */
+    private static function expandDottedKeys(array $row): array
+    {
+        $expanded = [];
+
+        foreach ($row as $field => $value) {
+            if (! str_contains($field, '.')) {
+                $expanded[$field] = $value;
+            }
+        }
+
+        foreach ($row as $field => $value) {
+            if (str_contains($field, '.')) {
+                $expanded = self::setPath($expanded, explode('.', $field), $value, $field);
+            }
+        }
+
+        return $expanded;
+    }
+
+    /**
+     * @param  array<string, mixed>  $target
+     * @param  list<string>  $segments
+     * @return array<string, mixed>
+     */
+    private static function setPath(array $target, array $segments, mixed $value, string $field): array
+    {
+        $segment = array_shift($segments);
+
+        if ($segment === null || $segment === '') {
+            return [...$target, $field => $value];
+        }
+
+        if ($segments === []) {
+            $target[$segment] ??= $value;
+
+            return $target;
+        }
+
+        $child = $target[$segment] ?? [];
+
+        if (! is_array($child) || ($child !== [] && array_is_list($child))) {
+            return [...$target, $field => $value];
+        }
+
+        /** @var array<string, mixed> $child */
+        $target[$segment] = self::setPath($child, $segments, $value, $field);
+
+        return $target;
     }
 
     /**
