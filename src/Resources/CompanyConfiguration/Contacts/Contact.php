@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ControlAir\Intacct\Resources\CompanyConfiguration\Contacts;
 
 use ControlAir\Intacct\Support\ArrayReader;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\MailingAddress;
 use ControlAir\Intacct\ValueObjects\ObjectId;
 use ControlAir\Intacct\ValueObjects\ObjectKey;
@@ -43,6 +44,7 @@ final readonly class Contact
         public ?SensitiveString $taxId,
         public ?ObjectReference $entity,
         public ?string $href,
+        public CustomFields $customFields = new CustomFields,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -78,6 +80,7 @@ final readonly class Contact
             taxId: $taxId === null ? null : new SensitiveString($taxId),
             entity: ArrayReader::reference($data, 'entity'),
             href: ArrayReader::string($data, 'href'),
+            customFields: CustomFields::fromArray($data),
         );
     }
 }

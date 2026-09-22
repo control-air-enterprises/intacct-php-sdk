@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ControlAir\Intacct\Resources\InventoryControl\Items;
 
 use ControlAir\Intacct\Support\ArrayReader;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\Decimal;
 use ControlAir\Intacct\ValueObjects\ObjectId;
 use ControlAir\Intacct\ValueObjects\ObjectKey;
@@ -31,6 +32,7 @@ final readonly class Item
         public ?Decimal $quantityOnHand,
         public ?Decimal $quantityOnOrder,
         public ?string $href,
+        public CustomFields $customFields = new CustomFields,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -60,6 +62,7 @@ final readonly class Item
             quantityOnHand: ArrayReader::decimal($data, 'quantityOnHand'),
             quantityOnOrder: ArrayReader::decimal($data, 'quantityOnOrder'),
             href: ArrayReader::string($data, 'href'),
+            customFields: CustomFields::fromArray($data),
         );
     }
 }

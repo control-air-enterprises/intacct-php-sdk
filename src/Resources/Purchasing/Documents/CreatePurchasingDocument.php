@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ControlAir\Intacct\Resources\Purchasing\Documents;
 
 use ControlAir\Intacct\Exceptions\InvalidArgument;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\LocalDate;
 use ControlAir\Intacct\ValueObjects\ObjectReference;
 
@@ -37,6 +38,7 @@ final readonly class CreatePurchasingDocument
         public ?ObjectReference $paymentTerm = null,
         public ?ObjectReference $project = null,
         public ?ObjectReference $sourceDocument = null,
+        public CustomFields $customFields = new CustomFields,
     ) {
         if ($this->vendor->id === null) {
             throw new InvalidArgument('A purchasing document vendor must be referenced by ID.');
@@ -57,7 +59,7 @@ final readonly class CreatePurchasingDocument
     /** @return array<string, mixed> */
     public function toArray(): array
     {
-        return array_filter([
+        $payload = array_filter([
             'txnDate' => $this->transactionDate->value,
             'vendor' => $this->vendor->toWriteArray(),
             'state' => $this->state?->value,
@@ -76,5 +78,7 @@ final readonly class CreatePurchasingDocument
                 $this->lines,
             ),
         ], static fn (mixed $value): bool => $value !== null);
+
+        return [...$payload, ...$this->customFields->toWriteArray()];
     }
 }

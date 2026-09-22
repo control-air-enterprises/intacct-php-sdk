@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ControlAir\Intacct\Resources\Projects;
 
 use ControlAir\Intacct\Support\ArrayReader;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\Decimal;
 use ControlAir\Intacct\ValueObjects\LocalDate;
 use ControlAir\Intacct\ValueObjects\ObjectId;
@@ -37,6 +38,7 @@ final readonly class Project
         public ?ObjectReference $location,
         public ?ObjectReference $class,
         public ?string $href,
+        public CustomFields $customFields = new CustomFields,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -68,6 +70,7 @@ final readonly class Project
             location: ArrayReader::reference($data, 'location'),
             class: ArrayReader::reference($data, 'class'),
             href: ArrayReader::string($data, 'href'),
+            customFields: CustomFields::fromArray($data),
         );
     }
 }

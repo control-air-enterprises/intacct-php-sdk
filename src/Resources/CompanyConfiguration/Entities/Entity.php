@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ControlAir\Intacct\Resources\CompanyConfiguration\Entities;
 
 use ControlAir\Intacct\Support\ArrayReader;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\LocalDate;
 use ControlAir\Intacct\ValueObjects\ObjectId;
 use ControlAir\Intacct\ValueObjects\ObjectKey;
@@ -31,6 +32,7 @@ final readonly class Entity
         public ?string $accountingType,
         public ?bool $isLimitedEntity,
         public ?string $href,
+        public CustomFields $customFields = new CustomFields,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -56,6 +58,7 @@ final readonly class Entity
             accountingType: ArrayReader::string($data, 'accountingType'),
             isLimitedEntity: ArrayReader::bool($data, 'isLimitedEntity'),
             href: ArrayReader::string($data, 'href'),
+            customFields: CustomFields::fromArray($data),
         );
     }
 }

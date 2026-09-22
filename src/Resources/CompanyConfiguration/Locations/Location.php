@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ControlAir\Intacct\Resources\CompanyConfiguration\Locations;
 
 use ControlAir\Intacct\Support\ArrayReader;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\LocalDate;
 use ControlAir\Intacct\ValueObjects\ObjectId;
 use ControlAir\Intacct\ValueObjects\ObjectKey;
@@ -30,6 +31,7 @@ final readonly class Location
         public ?string $taxId,
         public ?string $businessId,
         public ?string $href,
+        public CustomFields $customFields = new CustomFields,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -54,6 +56,7 @@ final readonly class Location
             taxId: ArrayReader::string($data, 'taxId'),
             businessId: ArrayReader::string($data, 'businessId'),
             href: ArrayReader::string($data, 'href'),
+            customFields: CustomFields::fromArray($data),
         );
     }
 }

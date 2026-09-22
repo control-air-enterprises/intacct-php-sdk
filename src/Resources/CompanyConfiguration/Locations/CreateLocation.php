@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ControlAir\Intacct\Resources\CompanyConfiguration\Locations;
 
 use ControlAir\Intacct\Support\Assert;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\LocalDate;
 use ControlAir\Intacct\ValueObjects\ObjectId;
 use ControlAir\Intacct\ValueObjects\ObjectReference;
@@ -23,6 +24,7 @@ final readonly class CreateLocation
         public ?LocalDate $endDate = null,
         public ?string $reportTitle = null,
         public ?string $printAs = null,
+        public CustomFields $customFields = new CustomFields,
     ) {
         Assert::notBlank($this->name, 'The location name');
     }
@@ -30,7 +32,7 @@ final readonly class CreateLocation
     /** @return array<string, mixed> */
     public function toArray(): array
     {
-        return array_filter([
+        $payload = array_filter([
             'id' => $this->id->value,
             'name' => $this->name,
             'description' => $this->description,
@@ -42,5 +44,7 @@ final readonly class CreateLocation
             'reportTitle' => $this->reportTitle,
             'printAs' => $this->printAs,
         ], static fn (mixed $value): bool => $value !== null);
+
+        return [...$payload, ...$this->customFields->toWriteArray()];
     }
 }

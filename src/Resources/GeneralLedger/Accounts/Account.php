@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ControlAir\Intacct\Resources\GeneralLedger\Accounts;
 
 use ControlAir\Intacct\Support\ArrayReader;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\ObjectId;
 use ControlAir\Intacct\ValueObjects\ObjectKey;
 use ControlAir\Intacct\ValueObjects\ObjectReference;
@@ -34,6 +35,7 @@ final readonly class Account
         public ?AccountRequiredDimensions $requireDimensions,
         public ?ObjectReference $entity,
         public ?string $href,
+        public CustomFields $customFields = new CustomFields,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -69,6 +71,7 @@ final readonly class Account
             requireDimensions: $requireDimensions === null ? null : AccountRequiredDimensions::fromArray($requireDimensions),
             entity: ArrayReader::reference($data, 'entity'),
             href: ArrayReader::string($data, 'href'),
+            customFields: CustomFields::fromArray($data),
         );
     }
 }

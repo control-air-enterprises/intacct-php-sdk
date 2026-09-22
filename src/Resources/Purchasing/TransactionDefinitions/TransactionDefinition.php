@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ControlAir\Intacct\Resources\Purchasing\TransactionDefinitions;
 
 use ControlAir\Intacct\Support\ArrayReader;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\ObjectId;
 use ControlAir\Intacct\ValueObjects\ObjectKey;
 use ControlAir\Intacct\ValueObjects\RecordStatus;
@@ -21,6 +22,7 @@ final readonly class TransactionDefinition
         public ?PostingMethod $postingMethod,
         public ?RecordStatus $status,
         public ?string $href,
+        public CustomFields $customFields = new CustomFields,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -42,6 +44,7 @@ final readonly class TransactionDefinition
             postingMethod: $postingMethod === null ? null : PostingMethod::tryFrom($postingMethod),
             status: $status === null ? null : RecordStatus::tryFrom($status),
             href: ArrayReader::string($data, 'href'),
+            customFields: CustomFields::fromArray($data),
         );
     }
 }

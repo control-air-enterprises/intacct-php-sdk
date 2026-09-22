@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ControlAir\Intacct\Resources\Projects;
 
 use ControlAir\Intacct\Support\Assert;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\Decimal;
 use ControlAir\Intacct\ValueObjects\LocalDate;
 use ControlAir\Intacct\ValueObjects\ObjectId;
@@ -33,6 +34,7 @@ final readonly class CreateProject
         public ?ObjectReference $department = null,
         public ?ObjectReference $location = null,
         public ?ObjectReference $class = null,
+        public CustomFields $customFields = new CustomFields,
     ) {
         Assert::notBlank($this->name, 'The project name');
     }
@@ -40,7 +42,7 @@ final readonly class CreateProject
     /** @return array<string, mixed> */
     public function toArray(): array
     {
-        return array_filter([
+        $payload = array_filter([
             'id' => $this->id->value,
             'name' => $this->name,
             'description' => $this->description,
@@ -61,5 +63,7 @@ final readonly class CreateProject
             'location' => $this->location?->toWriteArray(),
             'class' => $this->class?->toWriteArray(),
         ], static fn (mixed $value): bool => $value !== null);
+
+        return [...$payload, ...$this->customFields->toWriteArray()];
     }
 }

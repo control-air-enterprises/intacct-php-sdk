@@ -6,6 +6,7 @@ namespace ControlAir\Intacct\Resources\CompanyConfiguration\Attachments;
 
 use ControlAir\Intacct\Exceptions\MappingException;
 use ControlAir\Intacct\Support\ArrayReader;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\ObjectKey;
 use ControlAir\Intacct\ValueObjects\ObjectReference;
 
@@ -30,6 +31,7 @@ final readonly class AttachedFile
         public ?string $href,
         #[\SensitiveParameter]
         private ?string $data = null,
+        public CustomFields $customFields = new CustomFields,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -43,6 +45,7 @@ final readonly class AttachedFile
             attachment: ArrayReader::reference($data, 'attachment'),
             href: ArrayReader::string($data, 'href'),
             data: ArrayReader::string($data, 'data'),
+            customFields: CustomFields::fromArray($data),
         );
     }
 
@@ -83,6 +86,7 @@ final readonly class AttachedFile
             'attachment' => $this->attachment,
             'href' => $this->href,
             'data' => $this->data === null ? null : '[redacted]',
+            'customFields' => $this->customFields,
         ];
     }
 }

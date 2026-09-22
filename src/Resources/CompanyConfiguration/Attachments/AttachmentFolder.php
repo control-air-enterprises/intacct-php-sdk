@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ControlAir\Intacct\Resources\CompanyConfiguration\Attachments;
 
 use ControlAir\Intacct\Support\ArrayReader;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\ObjectId;
 use ControlAir\Intacct\ValueObjects\ObjectKey;
 use ControlAir\Intacct\ValueObjects\ObjectReference;
@@ -25,6 +26,7 @@ final readonly class AttachmentFolder
         public ?bool $hasSubfolders,
         public ?bool $hasAttachments,
         public ?string $href,
+        public CustomFields $customFields = new CustomFields,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -42,6 +44,7 @@ final readonly class AttachmentFolder
             hasSubfolders: ArrayReader::bool($data, 'hasSubfolders'),
             hasAttachments: ArrayReader::bool($data, 'hasAttachments'),
             href: ArrayReader::string($data, 'href'),
+            customFields: CustomFields::fromArray($data),
         );
     }
 }

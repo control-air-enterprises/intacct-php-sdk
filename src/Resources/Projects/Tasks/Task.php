@@ -6,6 +6,7 @@ namespace ControlAir\Intacct\Resources\Projects\Tasks;
 
 use ControlAir\Intacct\Exceptions\MappingException;
 use ControlAir\Intacct\Support\ArrayReader;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\Decimal;
 use ControlAir\Intacct\ValueObjects\LocalDate;
 use ControlAir\Intacct\ValueObjects\ObjectId;
@@ -39,6 +40,7 @@ final readonly class Task
         public ?ObjectReference $class,
         public ?ObjectReference $standardTask,
         public ?string $href,
+        public CustomFields $customFields = new CustomFields,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -78,6 +80,7 @@ final readonly class Task
             class: ArrayReader::reference($data, 'class'),
             standardTask: ArrayReader::reference($data, 'standardTask'),
             href: ArrayReader::string($data, 'href'),
+            customFields: CustomFields::fromArray($data),
         );
     }
 }

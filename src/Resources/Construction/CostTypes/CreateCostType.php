@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ControlAir\Intacct\Resources\Construction\CostTypes;
 
 use ControlAir\Intacct\Support\Assert;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\LocalDate;
 use ControlAir\Intacct\ValueObjects\ObjectId;
 use ControlAir\Intacct\ValueObjects\ObjectReference;
@@ -26,6 +27,7 @@ final readonly class CreateCostType
         public ?ObjectReference $standardCostType = null,
         public ?LocalDate $plannedStartDate = null,
         public ?LocalDate $plannedEndDate = null,
+        public CustomFields $customFields = new CustomFields,
     ) {
         Assert::notBlank($this->name, 'The cost type name');
     }
@@ -38,7 +40,7 @@ final readonly class CreateCostType
             'endDate' => $this->plannedEndDate?->value,
         ], static fn (?string $value): bool => $value !== null);
 
-        return array_filter([
+        $payload = array_filter([
             'project' => $this->project->toWriteArray(),
             'task' => $this->task->toWriteArray(),
             'id' => $this->id?->value,
@@ -52,5 +54,7 @@ final readonly class CreateCostType
             'standardCostType' => $this->standardCostType?->toWriteArray(),
             'planned' => $planned === [] ? null : $planned,
         ], static fn (mixed $value): bool => $value !== null);
+
+        return [...$payload, ...$this->customFields->toWriteArray()];
     }
 }

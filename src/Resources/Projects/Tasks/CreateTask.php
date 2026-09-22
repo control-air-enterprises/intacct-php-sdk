@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ControlAir\Intacct\Resources\Projects\Tasks;
 
 use ControlAir\Intacct\Support\Assert;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\LocalDate;
 use ControlAir\Intacct\ValueObjects\ObjectId;
 use ControlAir\Intacct\ValueObjects\ObjectReference;
@@ -27,6 +28,7 @@ final readonly class CreateTask
         public ?ObjectReference $timeType = null,
         public ?ObjectReference $class = null,
         public ?ObjectReference $standardTask = null,
+        public CustomFields $customFields = new CustomFields,
     ) {
         Assert::notBlank($this->name, 'The task name');
     }
@@ -39,7 +41,7 @@ final readonly class CreateTask
             'endDate' => $this->plannedEndDate?->value,
         ], static fn (?string $value): bool => $value !== null);
 
-        return array_filter([
+        $payload = array_filter([
             'id' => $this->id->value,
             'name' => $this->name,
             'project' => $this->project->toWriteArray(),
@@ -55,5 +57,7 @@ final readonly class CreateTask
             'class' => $this->class?->toWriteArray(),
             'standardTask' => $this->standardTask?->toWriteArray(),
         ], static fn (mixed $value): bool => $value !== null);
+
+        return [...$payload, ...$this->customFields->toWriteArray()];
     }
 }

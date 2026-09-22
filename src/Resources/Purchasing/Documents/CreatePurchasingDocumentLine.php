@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ControlAir\Intacct\Resources\Purchasing\Documents;
 
 use ControlAir\Intacct\Support\Assert;
+use ControlAir\Intacct\ValueObjects\CustomFields;
 use ControlAir\Intacct\ValueObjects\Decimal;
 use ControlAir\Intacct\ValueObjects\Dimensions;
 use ControlAir\Intacct\ValueObjects\ObjectReference;
@@ -29,6 +30,7 @@ final readonly class CreatePurchasingDocumentLine
         public ?string $memo = null,
         public ?ObjectReference $sourceDocument = null,
         public ?ObjectReference $sourceDocumentLine = null,
+        public CustomFields $customFields = new CustomFields,
     ) {
         Assert::notBlank($this->unit, 'The line unit');
     }
@@ -36,7 +38,7 @@ final readonly class CreatePurchasingDocumentLine
     /** @return array<string, mixed> */
     public function toArray(): array
     {
-        return array_filter([
+        $payload = array_filter([
             'unit' => $this->unit,
             'unitQuantity' => $this->unitQuantity->value,
             'unitPrice' => $this->unitPrice->value,
@@ -51,5 +53,7 @@ final readonly class CreatePurchasingDocumentLine
             'sourceDocument' => $this->sourceDocument?->toWriteArray(),
             'sourceDocumentLine' => $this->sourceDocumentLine?->toWriteArray(),
         ], static fn (mixed $value): bool => $value !== null);
+
+        return [...$payload, ...$this->customFields->toWriteArray()];
     }
 }
