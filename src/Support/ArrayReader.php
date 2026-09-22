@@ -127,6 +127,31 @@ final class ArrayReader
         return $references;
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     * @return list<array<string, mixed>>
+     */
+    public static function list(array $data, string $key): array
+    {
+        $values = $data[$key] ?? null;
+
+        if (! is_array($values) || ! array_is_list($values)) {
+            return [];
+        }
+
+        $objects = [];
+
+        foreach ($values as $value) {
+            $object = self::object($value);
+
+            if ($object !== null) {
+                $objects[] = $object;
+            }
+        }
+
+        return $objects;
+    }
+
     /** @param array<string, mixed> $data */
     public static function date(array $data, string $key): ?LocalDate
     {
