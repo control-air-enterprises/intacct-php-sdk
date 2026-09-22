@@ -27,8 +27,16 @@ final readonly class ApiTransport
     ) {}
 
     /**
+     * Sends a request and returns the decoded payload.
+     *
+     * HTTP 207 multi-status responses are returned rather than thrown so callers can map
+     * per-item results. Any other non-2xx status, or a top-level ia::error, throws an
+     * ApiException. Extra headers may not set Authorization, Content-Type or Accept; trying
+     * to, or passing a malformed header, throws InvalidArgument before anything is sent.
+     *
      * @param  array<string, scalar|list<scalar>>  $query
-     * @param  array<string, mixed>|null  $json
+     * @param  array<string, mixed>|list<mixed>|null  $json  batch and composite bodies are lists
+     * @param  array<string, string>  $headers
      * @return array<string, mixed>
      */
     public function request(
@@ -36,7 +44,26 @@ final readonly class ApiTransport
         string $path,
         array $query = [],
         ?array $json = null,
+        array $headers = [],
     ): array {
+        return $this->send($method, $path, $query, $json, $headers)->payload;
+    }
+
+    /**
+     * Like request(), but also exposes the HTTP status code and response headers.
+     *
+     * @param  array<string, scalar|list<scalar>>  $query
+     * @param  array<string, mixed>|list<mixed>|null  $json
+     * @param  array<string, string>  $headers
+     */
+    public function send(
+        HttpMethod $method,
+        string $path,
+        array $query = [],
+        ?array $json = null,
+        array $headers = [],
+    ): ApiResponse {
+        $headers = RequestHeaders::validate($headers);
         $uri = $this->configuration->uri($path);
 
         if ($query !== []) {
@@ -51,6 +78,10 @@ final readonly class ApiTransport
 
         if ($this->configuration->entityId !== null) {
             $request = $request->withHeader('X-IA-API-Param-Entity', $this->configuration->entityId);
+        }
+
+        foreach ($headers as $name => $value) {
+            $request = $request->withHeader((string) $name, $value);
         }
 
         if ($json !== null) {
@@ -71,14 +102,22 @@ final readonly class ApiTransport
             throw new TransportException('The Sage Intacct API request could not be sent.', previous: $exception);
         }
 
+        $status = $response->getStatusCode();
         $payload = $this->decode($response);
-        $error = $this->findError($payload);
+        $successful = $status >= 200 && $status < 300;
+        $error = $status === ApiResponse::MULTI_STATUS ? null : $this->findError($payload, ! $successful);
 
-        if ($response->getStatusCode() < 200 || $response->getStatusCode() >= 300 || $error !== null) {
+        if (! $successful || $error !== null) {
             throw $this->apiException($response, $payload, $error);
         }
 
-        return $payload;
+        $responseHeaders = [];
+
+        foreach ($response->getHeaders() as $name => $values) {
+            $responseHeaders[(string) $name] = array_values($values);
+        }
+
+        return new ApiResponse($status, $payload, $responseHeaders);
     }
 
     /** @return array<string, mixed> */
@@ -105,24 +144,58 @@ final readonly class ApiTransport
     }
 
     /**
+     * Finds a request-level error. A list-shaped ia::result (batch or composite) carries
+     * per-item outcomes, so it is only consulted to describe an already failed request.
+     *
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>|null
      */
-    private function findError(array $payload): ?array
+    private function findError(array $payload, bool $includeItems): ?array
     {
         $result = $payload['ia::result'] ?? null;
 
-        if (is_array($result) && isset($result['ia::error']) && is_array($result['ia::error'])) {
-            /** @var array<string, mixed> */
-            return $result['ia::error'];
+        if (is_array($result) && ! array_is_list($result)) {
+            $error = self::errorObject($result['ia::error'] ?? null);
+
+            if ($error !== null) {
+                return $error;
+            }
         }
 
-        if (isset($payload['ia::error']) && is_array($payload['ia::error'])) {
-            /** @var array<string, mixed> */
-            return $payload['ia::error'];
+        $error = self::errorObject($payload['ia::error'] ?? null);
+
+        if ($error !== null || ! $includeItems || ! is_array($result) || ! array_is_list($result)) {
+            return $error;
+        }
+
+        foreach ($result as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $nested = is_array($item['ia::result'] ?? null) ? $item['ia::result'] : [];
+            $error = self::errorObject($item['ia::error'] ?? $nested['ia::error'] ?? null);
+
+            if ($error !== null) {
+                return $error;
+            }
         }
 
         return null;
+    }
+
+    /**
+     * Sage Intacct returns ia::error either as an object or as a list of error objects.
+     *
+     * @return array<string, mixed>|null
+     */
+    private static function errorObject(mixed $value): ?array
+    {
+        if (is_array($value) && array_is_list($value)) {
+            $value = $value[0] ?? null;
+        }
+
+        return ArrayReader::object($value);
     }
 
     /**

@@ -6,6 +6,7 @@ namespace ControlAir\Intacct\Core\Response;
 
 use ControlAir\Intacct\Exceptions\MappingException;
 use ControlAir\Intacct\Support\ArrayReader;
+use ControlAir\Intacct\ValueObjects\ObjectKey;
 use ControlAir\Intacct\ValueObjects\ObjectReference;
 
 final readonly class MutationResult
@@ -34,6 +35,18 @@ final readonly class MutationResult
         return new self(
             $reference,
             ResponseMeta::fromArray($meta),
+        );
+    }
+
+    /**
+     * Sage Intacct answers a successful DELETE with 204 and no body, so the result refers
+     * to the key that was deleted.
+     */
+    public static function forDeletedKey(ObjectKey $key, ?ResponseMeta $meta = null): self
+    {
+        return new self(
+            new ObjectReference($key, null),
+            $meta ?? ResponseMeta::fromArray([]),
         );
     }
 }
