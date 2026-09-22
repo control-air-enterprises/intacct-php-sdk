@@ -7,9 +7,13 @@ namespace ControlAir\Intacct;
 use ControlAir\Intacct\Auth\Contracts\AccessTokenProvider;
 use ControlAir\Intacct\Configuration\ApiConfiguration;
 use ControlAir\Intacct\Core\Http\ApiTransport;
+use ControlAir\Intacct\Core\Model\ModelClient;
 use ControlAir\Intacct\Core\Query\QueryClient;
 use ControlAir\Intacct\Resources\AccountsPayable\AccountsPayable;
+use ControlAir\Intacct\Resources\CompanyConfiguration\Attachments\AttachmentFoldersClient;
+use ControlAir\Intacct\Resources\CompanyConfiguration\Attachments\AttachmentsClient;
 use ControlAir\Intacct\Resources\CompanyConfiguration\Classes\ClassesClient;
+use ControlAir\Intacct\Resources\CompanyConfiguration\Contacts\ContactsClient;
 use ControlAir\Intacct\Resources\CompanyConfiguration\Departments\DepartmentsClient;
 use ControlAir\Intacct\Resources\CompanyConfiguration\Dimensions\DimensionsClient;
 use ControlAir\Intacct\Resources\CompanyConfiguration\Employees\EmployeesClient;
@@ -31,6 +35,8 @@ final readonly class IntacctClient
     public ApiTransport $transport;
 
     public QueryClient $queries;
+
+    public ModelClient $model;
 
     public ProjectsClient $projects;
 
@@ -54,6 +60,12 @@ final readonly class IntacctClient
 
     public UsersClient $users;
 
+    public ContactsClient $contacts;
+
+    public AttachmentsClient $attachments;
+
+    public AttachmentFoldersClient $attachmentFolders;
+
     public AccountsPayable $accountsPayable;
 
     public InventoryControl $inventory;
@@ -75,6 +87,7 @@ final readonly class IntacctClient
             $configuration,
         );
         $this->queries = new QueryClient($this->transport);
+        $this->model = new ModelClient($this->transport);
         $this->projects = new ProjectsClient($this->transport, $this->queries);
         $this->tasks = new TasksClient($this->transport, $this->queries);
         $this->costTypes = new CostTypesClient($this->transport, $this->queries);
@@ -86,6 +99,9 @@ final readonly class IntacctClient
         $this->locations = new LocationsClient($this->transport, $this->queries);
         $this->entities = new EntitiesClient($this->transport, $this->queries);
         $this->users = new UsersClient($this->transport, $this->queries);
+        $this->contacts = new ContactsClient($this->transport, $this->queries);
+        $this->attachments = new AttachmentsClient($this->transport, $this->queries);
+        $this->attachmentFolders = new AttachmentFoldersClient($this->transport, $this->queries);
         $this->accountsPayable = new AccountsPayable($this->transport, $this->queries);
         $this->inventory = new InventoryControl($this->transport, $this->queries);
         $this->purchasing = new Purchasing($this->transport, $this->queries);
