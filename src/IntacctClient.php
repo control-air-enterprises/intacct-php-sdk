@@ -21,6 +21,7 @@ use ControlAir\Intacct\Resources\CompanyConfiguration\Entities\EntitiesClient;
 use ControlAir\Intacct\Resources\CompanyConfiguration\Locations\LocationsClient;
 use ControlAir\Intacct\Resources\CompanyConfiguration\Users\UsersClient;
 use ControlAir\Intacct\Resources\Construction\CostTypes\CostTypesClient;
+use ControlAir\Intacct\Resources\GeneralLedger\GeneralLedger;
 use ControlAir\Intacct\Resources\InventoryControl\InventoryControl;
 use ControlAir\Intacct\Resources\Projects\ProjectResources\ProjectResourcesClient;
 use ControlAir\Intacct\Resources\Projects\ProjectsClient;
@@ -68,6 +69,8 @@ final readonly class IntacctClient
 
     public AccountsPayable $accountsPayable;
 
+    public GeneralLedger $generalLedger;
+
     public InventoryControl $inventory;
 
     public Purchasing $purchasing;
@@ -103,6 +106,7 @@ final readonly class IntacctClient
         $this->attachments = new AttachmentsClient($this->transport, $this->queries);
         $this->attachmentFolders = new AttachmentFoldersClient($this->transport, $this->queries);
         $this->accountsPayable = new AccountsPayable($this->transport, $this->queries);
+        $this->generalLedger = new GeneralLedger($this->transport, $this->queries);
         $this->inventory = new InventoryControl($this->transport, $this->queries);
         $this->purchasing = new Purchasing($this->transport, $this->queries);
     }
