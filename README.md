@@ -181,9 +181,16 @@ The client currently exposes:
 - `$intacct->projects`, `$intacct->tasks`, and `$intacct->projectResources`;
 - `$intacct->costTypes` for construction cost types;
 - `$intacct->dimensions` for the company dimension catalog;
-- `$intacct->employees`, `$intacct->classes`, `$intacct->departments`, and `$intacct->locations`;
+- `$intacct->employees`, `$intacct->classes`, `$intacct->departments`, `$intacct->locations`, and `$intacct->contacts`;
+- `$intacct->attachments` and `$intacct->attachmentFolders`;
 - read-only `$intacct->entities` and `$intacct->users` clients;
-- `$intacct->queries` for advanced typed queries.
+- `$intacct->accountsPayable->vendors` and `$intacct->accountsPayable->terms`;
+- `$intacct->inventory->items`, `->warehouses`, `->productLines`, `->unitOfMeasureGroups`, and `->unitsOfMeasure`;
+- `$intacct->purchasing->transactionDefinitions` (read-only) and `$intacct->purchasing->documents('<transaction definition>')`;
+- read-only `$intacct->generalLedger->accounts`;
+- `$intacct->queries` for advanced typed queries, `$intacct->composite` for composite requests, and `$intacct->model` for object introspection.
+
+Newer Sage domains are grouped (`$intacct->inventory->items`) so each domain can grow without crowding the top-level client.
 
 ### Read and query projects
 
@@ -231,6 +238,131 @@ $intacct->projects->delete(new ObjectKey('123'));
 
 Update objects preserve the distinction between an omitted property and an explicitly supplied `null`, which is important for PATCH requests.
 
+### Purchase orders
+
+Purchasing documents are addressed by their transaction definition, such as `Purchase Order` or `PO Receiver`. Lines require an item, warehouse, and location; other dimensions are optional.
+
+```php
+use ControlAir\Intacct\Resources\Purchasing\Documents\CreatePurchasingDocument;
+use ControlAir\Intacct\Resources\Purchasing\Documents\CreatePurchasingDocumentLine;
+use ControlAir\Intacct\Resources\Purchasing\Documents\PurchasingDocumentState;
+use ControlAir\Intacct\ValueObjects\Decimal;
+use ControlAir\Intacct\ValueObjects\Dimensions;
+use ControlAir\Intacct\ValueObjects\LocalDate;
+use ControlAir\Intacct\ValueObjects\ObjectReference;
+
+$orders = $intacct->purchasing->documents('Purchase Order');
+
+$created = $orders->create(new CreatePurchasingDocument(
+    transactionDate: new LocalDate('2026-09-01'),
+    vendor: ObjectReference::byId('VEND-001'),
+    state: PurchasingDocumentState::Draft,
+    lines: [new CreatePurchasingDocumentLine(
+        item: ObjectReference::byId('HAMMER16'),
+        warehouse: ObjectReference::byId('WH-01'),
+        location: ObjectReference::byId('HQ'),
+        unit: 'Each',
+        unitQuantity: new Decimal('20'),
+        unitPrice: new Decimal('9.25'),
+        dimensions: new Dimensions(project: ObjectReference::byId('PROJ-001')),
+    )],
+));
+
+$orders->submit($created->reference->key);
+```
+
+To receive or invoice an order, create a document of the target type whose header and lines point at the source:
+
+```php
+$order = $orders->get($created->reference->key);
+$line = $order->lines[0];
+
+$intacct->purchasing->documents('PO Receiver')->create(new CreatePurchasingDocument(
+    transactionDate: new LocalDate('2026-09-10'),
+    vendor: ObjectReference::byId('VEND-001'),
+    sourceDocument: ObjectReference::byKey($order->key->value),
+    lines: [new CreatePurchasingDocumentLine(
+        item: ObjectReference::byId('HAMMER16'),
+        warehouse: ObjectReference::byId('WH-01'),
+        location: ObjectReference::byId('HQ'),
+        unit: 'Each',
+        unitQuantity: new Decimal('20'),
+        unitPrice: new Decimal('9.25'),
+        sourceDocument: ObjectReference::byKey($order->key->value),
+        sourceDocumentLine: ObjectReference::byKey($line->key->value),
+    )],
+));
+```
+
+`UpdatePurchasingDocument` combines header changes with `withAddedLine()`, `withUpdatedLine()`, and `withRemovedLine()` in one PATCH. Query results contain document headers only; read a document to load its lines.
+
+### Iterate every page
+
+`Paginator` fetches pages lazily as you iterate:
+
+```php
+use ControlAir\Intacct\Core\Query\Paginator;
+
+$items = Paginator::over(
+    $intacct->inventory->items->query(...),
+    new ResourceQuery(filters: [Filter::equal('status', 'active')], size: 500),
+);
+
+foreach ($items as $item) {
+    // ...
+}
+```
+
+It stops when Sage reports no next page, on an empty page, or when the next offset does not advance. Pass `maxPages` to cap the number of requests.
+
+### Retries
+
+Wrap your PSR-18 client in `RetryingHttpClient` to retry rate limits and transient failures:
+
+```php
+use ControlAir\Intacct\Core\Http\RetryingHttpClient;
+use ControlAir\Intacct\Core\Http\RetryPolicy;
+
+$http = new RetryingHttpClient(
+    client: new \GuzzleHttp\Client(['timeout' => 30]),
+    policy: new RetryPolicy(maxRetries: 3, baseDelayMilliseconds: 500, maxDelayMilliseconds: 30_000),
+);
+```
+
+- HTTP 429 is retried for every method, honoring `Retry-After` and Sage's `X-IA-*-Retry-After` headers.
+- HTTP 5xx and network errors are retried for GET, HEAD, OPTIONS, and DELETE, and for a POST or PATCH carrying an `Idempotency-Key`. Other writes are never resent, so a request that timed out after Sage processed it cannot create a duplicate.
+
+### Composite requests
+
+A composite request runs 2 to 10 operations in order and can feed one result into a later operation. Execution stops at the first failure, and earlier operations are **not** rolled back.
+
+```php
+use ControlAir\Intacct\Core\Composite\CompositeOperation;
+use ControlAir\Intacct\Core\Composite\CompositeReference;
+use ControlAir\Intacct\Core\Composite\CompositeRequest;
+
+$result = $intacct->composite->execute(CompositeRequest::of(
+    CompositeOperation::post('/objects/accounts-payable/vendor', ['id' => 'V100', 'name' => 'Acme'], resultReference: 'vendor'),
+    CompositeOperation::get('/objects/accounts-payable/vendor/'.CompositeReference::to('vendor', 1, 'key')),
+));
+
+if (! $result->isSuccessful()) {
+    $failure = $result->firstFailure();
+}
+```
+
+### Object model
+
+`$intacct->model` describes an object's fields, groups, and relationships as configured in the tenant, including custom fields:
+
+```php
+$model = $intacct->model->describe('accounts-payable/vendor');
+
+foreach ($model?->customFields() ?? [] as $field) {
+    echo $field->name, ' ', $field->type, PHP_EOL;
+}
+```
+
 ## Project structure
 
 ```text
@@ -277,4 +409,4 @@ SAGE_INTACCT_COMPANY_ID=your-company-id
 SAGE_INTACCT_ENTITY_ID=optional-entity-id
 ```
 
-The live test requests a token and uses it to read and map the company dimension catalog. This verifies both authentication and a real REST API request without mutating Sage data, printing credentials, introspecting, or revoking the token. If any required value is absent, PHPUnit marks the integration test as skipped. The `.env` file is ignored by Git.
+The live test requests a token and uses it to read and map the company dimension catalog. This verifies both authentication and a real REST API request without mutating Sage data, printing credentials, introspecting, or revoking the token. `LiveResourcesTest` then runs read-only queries against vendors, items, purchasing transaction definitions and documents, and the model service to confirm query object names and response shapes. It never creates, changes, or deletes records. If any required value is absent, PHPUnit marks the integration tests as skipped. The `.env` file is ignored by Git.

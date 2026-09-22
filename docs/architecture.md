@@ -63,7 +63,9 @@ The REST resource layer follows the same boundary rules:
 1. `ApiTransport` adds bearer authentication, Sage headers, JSON encoding, and error mapping.
 2. Create/update DTOs validate write payloads and preserve omitted-versus-null PATCH semantics.
 3. Resource DTOs and response envelopes map `ia::result` and `ia::meta` into stable types.
-4. Resource clients group one Sage domain, such as Accounts Payable or General Ledger.
+4. Resource clients group one Sage domain, such as Accounts Payable or General Ledger. Newer domains are exposed through a group class (`$client->inventory->items`), which keeps the composition root small as domains are added.
 5. Laravel support only configures and binds the same public clients.
+
+Cross-cutting protocol features live in `Core` so every resource inherits them: dotted-key expansion of query rows, lazy pagination (`Paginator`), batch writes and idempotency keys (`ResourceGateway`), composite requests (`Core/Composite`), and object-model introspection (`Core/Model`). Retrying is an opt-in PSR-18 decorator (`RetryingHttpClient`) rather than transport behavior, so applications keep control of their HTTP stack.
 
 The raw `QueryClient` intentionally returns rows as arrays because callers choose arbitrary field sets. All resource clients use fixed field selections and map those rows into concrete DTOs. When Sage adds fields, update the corresponding DTO and its mapper with fixture-backed tests.
