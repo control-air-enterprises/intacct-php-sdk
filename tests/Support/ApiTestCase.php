@@ -6,6 +6,7 @@ namespace ControlAir\Intacct\Tests\Support;
 
 use ControlAir\Intacct\Auth\Tokens\AccessToken;
 use ControlAir\Intacct\Auth\Tokens\StaticAccessTokenProvider;
+use ControlAir\Intacct\Core\Http\ApiTransport;
 use ControlAir\Intacct\IntacctClient;
 use ControlAir\Intacct\Support\ArrayReader;
 use GuzzleHttp\Psr7\HttpFactory;
@@ -23,6 +24,27 @@ abstract class ApiTestCase extends TestCase
 
         return [
             new IntacctClient(
+                new StaticAccessTokenProvider(new AccessToken('token')),
+                $http,
+                $factory,
+                $factory,
+            ),
+            $http,
+        ];
+    }
+
+    /**
+     * For resource clients that are not wired into IntacctClient.
+     *
+     * @return array{ApiTransport, QueueHttpClient}
+     */
+    protected function transport(Response ...$responses): array
+    {
+        $http = new QueueHttpClient(...$responses);
+        $factory = new HttpFactory;
+
+        return [
+            new ApiTransport(
                 new StaticAccessTokenProvider(new AccessToken('token')),
                 $http,
                 $factory,
