@@ -12,9 +12,11 @@ Resource clients mirror Sage Intacct REST domains while sharing the transport, q
 | Construction | `Resources\Construction` | [Construction.md](Construction.md) |
 | Company configuration | `Resources\CompanyConfiguration` | [CompanyConfiguration.md](CompanyConfiguration.md) |
 | Accounts Payable | `Resources\AccountsPayable` | [AccountsPayable.md](AccountsPayable.md) |
+| Accounts Receivable | `Resources\AccountsReceivable` | [AccountsReceivable.md](AccountsReceivable.md) |
 | Inventory Control | `Resources\InventoryControl` | [InventoryControl.md](InventoryControl.md) |
 | Purchasing | `Resources\Purchasing` | [Purchasing.md](Purchasing.md) |
 | General Ledger | `Resources\GeneralLedger` | [GeneralLedger.md](GeneralLedger.md) |
+| Time | `Resources\Time` | [Time.md](Time.md) |
 
 Every writable client also supports idempotency keys and batch writes; see [Core](../Core/README.md#batch-writes-and-idempotency).
 

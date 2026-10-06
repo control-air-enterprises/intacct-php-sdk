@@ -179,7 +179,10 @@ $intacct = new IntacctClient(
 The client currently exposes:
 
 - `$intacct->projects`, `$intacct->tasks`, and `$intacct->projectResources`;
-- `$intacct->costTypes` for construction cost types;
+- `$intacct->costTypes` for construction cost types, also available as `$intacct->construction->costTypes`;
+- `$intacct->construction->laborUnions`, `->laborClasses`, `->laborShifts`, `->employeePositions`, `->projectContracts`, `->projectContractLines`, `->projectChangeOrders`, and `->changeRequests`;
+- `$intacct->accountsReceivable->customers`;
+- `$intacct->time->timesheets` and `$intacct->time->timeTypes`;
 - `$intacct->dimensions` for the company dimension catalog;
 - `$intacct->employees`, `$intacct->classes`, `$intacct->departments`, `$intacct->locations`, and `$intacct->contacts`;
 - `$intacct->attachments` and `$intacct->attachmentFolders`;

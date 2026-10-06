@@ -456,6 +456,9 @@ final class ResourceCustomFieldsTest extends ApiTestCase
         $nested = [
             'TermDiscount', 'TermDue', 'TermPenalty', 'DimensionDefinition',
             'AccountRequiredDimensions', 'ProjectBudget', 'ProjectResourcePricing',
+            'TimesheetExternalPayroll', 'TimesheetHours', 'ProjectContractSummary',
+            'ProjectContractBilling', 'ProjectContractSchedule', 'ProjectContractLineBilling',
+            'ChangeOrderSchedule', 'ChangeOrderInternalReference', 'ChangeOrderExternalReference',
         ];
 
         foreach (self::resourceClasses() as $name => $class) {
