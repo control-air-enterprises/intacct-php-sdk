@@ -28,6 +28,7 @@ use ControlAir\Intacct\Resources\Projects\ProjectResources\ProjectResourcesClien
 use ControlAir\Intacct\Resources\Projects\ProjectsClient;
 use ControlAir\Intacct\Resources\Projects\Tasks\TasksClient;
 use ControlAir\Intacct\Resources\Purchasing\Purchasing;
+use ControlAir\Intacct\Webhooks\EventQueue\EventQueueClient;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
@@ -78,6 +79,8 @@ final readonly class IntacctClient
 
     public Purchasing $purchasing;
 
+    public EventQueueClient $eventQueue;
+
     public function __construct(
         AccessTokenProvider $tokens,
         ClientInterface $httpClient,
@@ -113,5 +116,6 @@ final readonly class IntacctClient
         $this->generalLedger = new GeneralLedger($this->transport, $this->queries);
         $this->inventory = new InventoryControl($this->transport, $this->queries);
         $this->purchasing = new Purchasing($this->transport, $this->queries);
+        $this->eventQueue = new EventQueueClient($this->transport);
     }
 }

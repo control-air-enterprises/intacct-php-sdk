@@ -188,7 +188,8 @@ The client currently exposes:
 - `$intacct->inventory->items`, `->warehouses`, `->productLines`, `->unitOfMeasureGroups`, and `->unitsOfMeasure`;
 - `$intacct->purchasing->transactionDefinitions` (read-only) and `$intacct->purchasing->documents('<transaction definition>')`;
 - read-only `$intacct->generalLedger->accounts`;
-- `$intacct->queries` for advanced typed queries, `$intacct->composite` for composite requests, and `$intacct->model` for object introspection.
+- `$intacct->queries` for advanced typed queries, `$intacct->composite` for composite requests, and `$intacct->model` for object introspection;
+- `$intacct->eventQueue` for the Platform Trigger event queue (see [Webhooks](#webhooks)).
 
 Newer Sage domains are grouped (`$intacct->inventory->items`) so each domain can grow without crowding the top-level client.
 
@@ -408,6 +409,32 @@ foreach ($model?->customFields() ?? [] as $field) {
 }
 ```
 
+## Webhooks
+
+Sage Intacct delivers record events through Platform Triggers configured in the Sage UI; there is no API to register them. The SDK verifies the deliveries and reads the event queue:
+
+```php
+use ControlAir\Intacct\Exceptions\WebhookVerificationException;
+use ControlAir\Intacct\Webhooks\WebhookVerifier;
+
+$verifier = WebhookVerifier::forApplication($application);
+
+try {
+    $event = $verifier->verify($psrServerRequest); // or verifyRaw($rawBody, $headers)
+} catch (WebhookVerificationException $exception) {
+    return new Response(401);
+}
+
+$event->context?->restObjectName(); // "company-config/class"
+$event->payload->json();            // the trigger's body
+$event->idempotencyKey;             // dedupe Sage's retries with a ProcessedEventStore
+
+$batch = $intacct->eventQueue->list(); // events that missed delivery, kept for 7 days
+$intacct->eventQueue->acknowledge($batch);
+```
+
+See the [webhooks guide](docs/Webhooks/README.md) for trigger setup, verification details, the event queue, and idempotency.
+
 ## Project structure
 
 ```text
@@ -418,13 +445,14 @@ src/
 │   └── Tokens/    Token values, storage, and lifecycle orchestration
 ├── Core/          HTTP transport, queries, resource gateway, and responses
 ├── Resources/     Typed Sage REST resources grouped by Sage domain
+├── Webhooks/      Webhook verification, the event queue, and idempotency contracts
 ├── ValueObjects/  Keys, IDs, references, dates, decimals, and safe secrets
 ├── Configuration/
 ├── Exceptions/
 └── Support/
 ```
 
-See [the architecture notes](docs/architecture.md) and [resource module guide](docs/modules.md).
+Documentation is in [`docs/`](docs/README.md), organized by namespace: [Core](docs/Core/README.md), [Resources](docs/Resources/README.md), [Webhooks](docs/Webhooks/README.md), and the [architecture notes](docs/architecture.md).
 
 ## Development
 
