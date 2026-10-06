@@ -1,0 +1,93 @@
+<?php
+
+declare(strict_types=1);
+
+namespace ControlAir\Intacct\Resources\Time\TimeTypes;
+
+use ControlAir\Intacct\Exceptions\InvalidArgument;
+use ControlAir\Intacct\ValueObjects\CustomFields;
+use ControlAir\Intacct\ValueObjects\ObjectReference;
+use ControlAir\Intacct\ValueObjects\RecordStatus;
+
+final readonly class UpdateTimeType
+{
+    /** @param non-empty-array<string, mixed> $changes */
+    private function __construct(private array $changes) {}
+
+    public static function status(RecordStatus $status): self
+    {
+        return new self(['status' => $status->value]);
+    }
+
+    public static function glAccount(?ObjectReference $glAccount): self
+    {
+        return new self(['glAccount' => $glAccount?->toWriteArray()]);
+    }
+
+    /** Starts a change set with one custom field, named with or without the `nsp::` prefix; null clears it. */
+    public static function customField(string $name, mixed $value): self
+    {
+        return self::customFields((new CustomFields)->with($name, $value));
+    }
+
+    /** Starts a change set with custom fields; a null value clears its field. */
+    public static function customFields(CustomFields $fields): self
+    {
+        $changes = $fields->toWriteArray();
+
+        if ($changes === []) {
+            throw new InvalidArgument('At least one custom field is required.');
+        }
+
+        return new self($changes);
+    }
+
+    public function withStatus(RecordStatus $status): self
+    {
+        return $this->with('status', $status->value);
+    }
+
+    public function withGLAccount(?ObjectReference $glAccount): self
+    {
+        return $this->with('glAccount', $glAccount?->toWriteArray());
+    }
+
+    public function withOffsetGLAccount(?ObjectReference $offsetGLAccount): self
+    {
+        return $this->with('offsetGLAccount', $offsetGLAccount?->toWriteArray());
+    }
+
+    public function withEarningType(?ObjectReference $earningType): self
+    {
+        return $this->with('earningType', $earningType?->toWriteArray());
+    }
+
+    /** Sets a custom field, named with or without the `nsp::` prefix; null clears it. */
+    public function withCustomField(string $name, mixed $value): self
+    {
+        return $this->withCustomFields((new CustomFields)->with($name, $value));
+    }
+
+    /** Sets custom fields; a null value clears its field. */
+    public function withCustomFields(CustomFields $fields): self
+    {
+        $update = $this;
+
+        foreach ($fields->toWriteArray() as $field => $value) {
+            $update = $update->with($field, $value);
+        }
+
+        return $update;
+    }
+
+    /** @return non-empty-array<string, mixed> */
+    public function toArray(): array
+    {
+        return $this->changes;
+    }
+
+    private function with(string $field, mixed $value): self
+    {
+        return new self([...$this->changes, $field => $value]);
+    }
+}

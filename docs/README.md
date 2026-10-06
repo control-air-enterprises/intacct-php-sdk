@@ -11,12 +11,14 @@ docs/
 ├── Resources/
 │   ├── README.md                 ControlAir\Intacct\Resources: overview, custom fields, extending
 │   ├── AccountsPayable.md        Resources\AccountsPayable
+│   ├── AccountsReceivable.md     Resources\AccountsReceivable
 │   ├── CompanyConfiguration.md   Resources\CompanyConfiguration
-│   ├── Construction.md           Resources\Construction
+│   ├── Construction.md           Resources\Construction: cost types, labor, contracts, change orders
 │   ├── GeneralLedger.md          Resources\GeneralLedger
 │   ├── InventoryControl.md       Resources\InventoryControl
 │   ├── Projects.md               Resources\Projects
-│   └── Purchasing.md             Resources\Purchasing
+│   ├── Purchasing.md             Resources\Purchasing
+│   └── Time.md                   Resources\Time: timesheets and time types
 └── Webhooks/
     ├── README.md                 ControlAir\Intacct\Webhooks: how Sage delivers events, setup, quick start
     ├── Verification.md           Webhooks: WebhookVerifier and the verified event

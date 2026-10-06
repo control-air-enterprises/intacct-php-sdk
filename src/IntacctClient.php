@@ -11,6 +11,7 @@ use ControlAir\Intacct\Core\Http\ApiTransport;
 use ControlAir\Intacct\Core\Model\ModelClient;
 use ControlAir\Intacct\Core\Query\QueryClient;
 use ControlAir\Intacct\Resources\AccountsPayable\AccountsPayable;
+use ControlAir\Intacct\Resources\AccountsReceivable\AccountsReceivable;
 use ControlAir\Intacct\Resources\CompanyConfiguration\Attachments\AttachmentFoldersClient;
 use ControlAir\Intacct\Resources\CompanyConfiguration\Attachments\AttachmentsClient;
 use ControlAir\Intacct\Resources\CompanyConfiguration\Classes\ClassesClient;
@@ -21,6 +22,7 @@ use ControlAir\Intacct\Resources\CompanyConfiguration\Employees\EmployeesClient;
 use ControlAir\Intacct\Resources\CompanyConfiguration\Entities\EntitiesClient;
 use ControlAir\Intacct\Resources\CompanyConfiguration\Locations\LocationsClient;
 use ControlAir\Intacct\Resources\CompanyConfiguration\Users\UsersClient;
+use ControlAir\Intacct\Resources\Construction\Construction;
 use ControlAir\Intacct\Resources\Construction\CostTypes\CostTypesClient;
 use ControlAir\Intacct\Resources\GeneralLedger\GeneralLedger;
 use ControlAir\Intacct\Resources\InventoryControl\InventoryControl;
@@ -28,6 +30,7 @@ use ControlAir\Intacct\Resources\Projects\ProjectResources\ProjectResourcesClien
 use ControlAir\Intacct\Resources\Projects\ProjectsClient;
 use ControlAir\Intacct\Resources\Projects\Tasks\TasksClient;
 use ControlAir\Intacct\Resources\Purchasing\Purchasing;
+use ControlAir\Intacct\Resources\Time\Time;
 use ControlAir\Intacct\Webhooks\EventQueue\EventQueueClient;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
@@ -73,11 +76,17 @@ final readonly class IntacctClient
 
     public AccountsPayable $accountsPayable;
 
+    public AccountsReceivable $accountsReceivable;
+
     public GeneralLedger $generalLedger;
 
     public InventoryControl $inventory;
 
     public Purchasing $purchasing;
+
+    public Construction $construction;
+
+    public Time $time;
 
     public EventQueueClient $eventQueue;
 
@@ -113,9 +122,12 @@ final readonly class IntacctClient
         $this->attachments = new AttachmentsClient($this->transport, $this->queries);
         $this->attachmentFolders = new AttachmentFoldersClient($this->transport, $this->queries);
         $this->accountsPayable = new AccountsPayable($this->transport, $this->queries);
+        $this->accountsReceivable = new AccountsReceivable($this->transport, $this->queries);
         $this->generalLedger = new GeneralLedger($this->transport, $this->queries);
         $this->inventory = new InventoryControl($this->transport, $this->queries);
         $this->purchasing = new Purchasing($this->transport, $this->queries);
+        $this->construction = new Construction($this->transport, $this->queries);
+        $this->time = new Time($this->transport, $this->queries);
         $this->eventQueue = new EventQueueClient($this->transport);
     }
 }
