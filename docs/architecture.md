@@ -30,10 +30,15 @@ No class in the core reads environment variables, resolves a service container, 
 - `Auth` handles authentication and token lifecycle only.
 - `Core` implements protocol concerns shared by every REST resource: transport, query serialization, response envelopes, and the resource gateway.
 - `Resources` maps Sage REST objects into typed PHP clients and DTOs. Its subdirectories follow Sage's API domains.
+- `Webhooks` receives Platform Trigger events: signature verification of inbound webhooks, the event-queue service client, and the processed-event store contract. It depends on `Core` and `ValueObjects`, never on a resource module; mapping a payload to a resource DTO is done by the caller passing a mapper.
 - `ValueObjects` contains immutable primitives shared by resource modules.
 - `Configuration`, `Exceptions`, and `Support` remain framework neutral.
 
 Dependencies point inward: resource clients may depend on `Core` and `ValueObjects`; `Core` never depends on a resource module. The top-level `IntacctClient` is the composition root.
+
+## Webhook boundary
+
+Inbound webhooks do not pass through `ApiTransport`: `WebhookVerifier` takes a PSR-7 server request (or a raw body and headers) and needs only the client secret and a PSR-20 clock. It verifies HS256 with `hash_hmac` instead of a JWT library, so the package keeps its dependency list to PSR interfaces. As with tokens, deduplication storage belongs to the application through the `ProcessedEventStore` contract. See [Webhooks](Webhooks/README.md).
 
 ## Authentication boundary
 

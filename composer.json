@@ -39,6 +39,7 @@
     "scripts": {
         "test": "phpunit --testsuite Unit",
         "test:integration": "phpunit --testsuite Integration",
+        "test:webhooks": "phpunit --testsuite Integration --group webhooks",
         "analyse": "phpstan analyse --memory-limit=1G --debug --no-progress",
         "format": "pint",
         "check": [
