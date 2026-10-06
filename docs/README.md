@@ -21,6 +21,7 @@ docs/
 │   └── Time.md                   Resources\Time: timesheets and time types
 └── Webhooks/
     ├── README.md                 ControlAir\Intacct\Webhooks: how Sage delivers events, setup, quick start
+    ├── Triggers.md               Trigger setup checklist (Sage UI)
     ├── Verification.md           Webhooks: WebhookVerifier and the verified event
     ├── EventQueue.md             Webhooks\EventQueue
     └── Idempotency.md            Webhooks\Contracts
