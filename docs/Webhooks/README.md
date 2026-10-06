@@ -8,6 +8,7 @@ Sage Intacct pushes record events to your application through **Platform Trigger
 
 | Guide | Namespace | Covers |
 | --- | --- | --- |
+| [Trigger setup](Triggers.md) | — | Configuring triggers in the Sage UI, document templates, and what to confirm before relying on them |
 | [Verification](Verification.md) | `Webhooks` | `WebhookVerifier`, `WebhookEvent`, `ClientContext`, `WebhookPayload` |
 | [Event queue](EventQueue.md) | `Webhooks\EventQueue` | `EventQueueClient`, `EventBatch`, `QueuedEvent` |
 | [Idempotency](Idempotency.md) | `Webhooks\Contracts` | `ProcessedEventStore`, `InMemoryProcessedEventStore` |
@@ -43,7 +44,7 @@ Your endpoint must be public, use HTTPS, accept POST, and respond quickly. Ackno
 
 ## Set up a trigger
 
-In Sage Intacct, follow [Add Platform triggers to automate tasks](https://www.intacct.com/ia/docs/en_US/help_action/More/Customization_and_Platform_Services/Triggers/add-platform-triggers.htm), then:
+Start with the [trigger setup checklist](Triggers.md). It covers permissions, the form settings, templates, and the open behaviours to confirm. For an HTTP post trigger, follow [Add Platform triggers to automate tasks](https://www.intacct.com/ia/docs/en_US/help_action/More/Customization_and_Platform_Services/Triggers/add-platform-triggers.htm), then:
 
 1. Choose the object and the event (for example *After create* on Class).
 2. Set the trigger type to **HTTP post** and select **Use webhook delivery**.
