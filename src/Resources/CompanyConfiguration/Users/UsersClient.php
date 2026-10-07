@@ -32,14 +32,18 @@ final readonly class UsersClient
         return $this->gateway->get($key);
     }
 
-    /** @return Page<User> */
+    /**
+     * Sage does not let a query select the owned lists `locations`, `departments`, and `roles`,
+     * so they are empty on query results; `get()` returns them.
+     *
+     * @return Page<User>
+     */
     public function query(ResourceQuery $query = new ResourceQuery): Page
     {
         return $this->gateway->query($query->select([
             'key', 'id', 'userName', 'accountEmail', 'adminPrivileges', 'userType',
             'webServices.isEnabled', 'webServices.isRestricted', 'status', 'contact.key',
-            'contact.id', 'entity.key', 'entity.id', 'entity.name', 'locations',
-            'departments', 'roles', 'href',
+            'contact.id', 'entity.key', 'entity.id', 'entity.name', 'href',
         ]));
     }
 }

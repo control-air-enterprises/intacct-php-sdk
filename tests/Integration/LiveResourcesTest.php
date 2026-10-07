@@ -25,6 +25,27 @@ final class LiveResourcesTest extends LiveTestCase
         self::assertGreaterThanOrEqual(count($items->items), $items->meta->totalCount);
     }
 
+    /** Each typed query sends a fixed field list; Sage fails the whole query when one field does not exist. */
+    public function test_company_configuration_queries_select_only_existing_fields(): void
+    {
+        $client = $this->client();
+        $query = new ResourceQuery(size: 5);
+
+        $pages = [
+            'locations' => $client->locations->query($query),
+            'departments' => $client->departments->query($query),
+            'classes' => $client->classes->query($query),
+            'entities' => $client->entities->query($query),
+            'employees' => $client->employees->query($query),
+            'users' => $client->users->query($query),
+            'contacts' => $client->contacts->query($query),
+        ];
+
+        foreach ($pages as $name => $page) {
+            self::assertGreaterThanOrEqual(count($page->items), $page->meta->totalCount, $name);
+        }
+    }
+
     public function test_purchasing_documents_can_be_queried_by_transaction_definition(): void
     {
         $client = $this->client();
