@@ -39,7 +39,7 @@ final readonly class LocationsClient
     public function query(ResourceQuery $query = new ResourceQuery): Page
     {
         return $this->gateway->query($query->select([
-            'key', 'id', 'name', 'description', 'status', 'startDate', 'endDate',
+            'key', 'id', 'name', 'status', 'startDate', 'endDate',
             'reportTitle', 'printAs', 'parent.key', 'parent.id', 'parent.name',
             'manager.key', 'manager.id', 'manager.name', 'entity.key', 'entity.id',
             'entity.name', 'baseCurrency', 'taxId', 'businessId', 'href',

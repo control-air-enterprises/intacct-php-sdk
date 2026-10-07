@@ -46,11 +46,6 @@ final readonly class UpdateLocation
         return new self($changes);
     }
 
-    public function withDescription(?string $description): self
-    {
-        return $this->with('description', $description);
-    }
-
     public function withStatus(RecordStatus $status): self
     {
         return $this->with('status', $status->value);

@@ -16,7 +16,6 @@ final readonly class CreateLocation
     public function __construct(
         public ObjectId $id,
         public string $name,
-        public ?string $description = null,
         public ?RecordStatus $status = null,
         public ?ObjectReference $parent = null,
         public ?ObjectReference $manager = null,
@@ -35,7 +34,6 @@ final readonly class CreateLocation
         $payload = array_filter([
             'id' => $this->id->value,
             'name' => $this->name,
-            'description' => $this->description,
             'status' => $this->status?->value,
             'parent' => $this->parent?->toWriteArray(),
             'manager' => $this->manager?->toWriteArray(),
