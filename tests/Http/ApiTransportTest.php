@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ControlAir\Intacct\Tests\Http;
 
+use ControlAir\Intacct\Auth\Contracts\AccessTokenProvider;
 use ControlAir\Intacct\Auth\Tokens\AccessToken;
 use ControlAir\Intacct\Auth\Tokens\StaticAccessTokenProvider;
 use ControlAir\Intacct\Configuration\ApiConfiguration;
@@ -12,6 +13,7 @@ use ControlAir\Intacct\Core\Http\HttpMethod;
 use ControlAir\Intacct\Exceptions\ApiException;
 use ControlAir\Intacct\Exceptions\InvalidArgument;
 use ControlAir\Intacct\Tests\Support\QueueHttpClient;
+use ControlAir\Intacct\Tests\Support\RotatingAccessTokenProvider;
 use GuzzleHttp\Psr7\HttpFactory;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -23,6 +25,8 @@ final class ApiTransportTest extends TestCase
 {
     /** Verbatim 207 example from the composite spec. */
     private const SPEC_207 = '{"ia::result":[{"ia::error":{"code":"notFound","message":"Asynchronous job 6465763031YSPy9lgWtJCMGZ6UkUbA6QAAAAY1 status could not be found","supportId":"tqKR0%7EYsTZeDEdVao0_h01dZFQqgAAAAY"},"ia::status":404},{"ia::error":{"code":"unprocessed","message":"Operation skipped due to atomic transaction failure"},"ia::status":422}],"ia::meta":{"totalCount":2,"totalSuccess":0,"totalError":2}}';
+
+    private const TOKEN_INVALID_401 = '{"ia::error":{"code":"tokenInvalid","message":"The access token is invalid"}}';
 
     public function test_it_sends_an_authenticated_entity_scoped_json_request(): void
     {
@@ -236,6 +240,64 @@ final class ApiTransportTest extends TestCase
         $transport->request(HttpMethod::Get, 'objects/x');
     }
 
+    public function test_it_retries_once_with_a_fresh_token_after_a_401(): void
+    {
+        $rejected = new AccessToken('revoked-access-token');
+        $tokens = new RotatingAccessTokenProvider($rejected, new AccessToken('fresh-access-token'));
+        $http = new QueueHttpClient(
+            new Response(401, [], self::TOKEN_INVALID_401),
+            new Response(200, [], '{"ia::result":{"key":"42"}}'),
+        );
+
+        $result = $this->transportWith($tokens, $http)->request(HttpMethod::Post, 'objects/x', json: ['id' => 'PROJ-001']);
+
+        self::assertSame(['key' => '42'], $result['ia::result']);
+        self::assertCount(2, $http->requests);
+        self::assertSame('Bearer revoked-access-token', $http->requests[0]->getHeaderLine('Authorization'));
+        self::assertSame('Bearer fresh-access-token', $http->requests[1]->getHeaderLine('Authorization'));
+        self::assertSame('{"id":"PROJ-001"}', (string) $http->requests[1]->getBody());
+        self::assertSame([$rejected], $tokens->invalidated);
+    }
+
+    public function test_it_gives_up_after_a_second_401(): void
+    {
+        $tokens = new RotatingAccessTokenProvider(
+            new AccessToken('revoked-access-token'),
+            new AccessToken('also-revoked-access-token'),
+            new AccessToken('unused-access-token'),
+        );
+        $http = new QueueHttpClient(
+            new Response(401, [], self::TOKEN_INVALID_401),
+            new Response(401, [], self::TOKEN_INVALID_401),
+            new Response(200, [], '{"ia::result":{"key":"42"}}'),
+        );
+
+        try {
+            $this->transportWith($tokens, $http)->request(HttpMethod::Get, 'objects/x');
+            self::fail('Expected an ApiException.');
+        } catch (ApiException $exception) {
+            self::assertSame(401, $exception->statusCode);
+            self::assertSame('tokenInvalid', $exception->errorCode);
+        }
+
+        self::assertCount(2, $http->requests);
+        self::assertCount(1, $tokens->invalidated);
+    }
+
+    public function test_it_does_not_retry_a_401_when_the_provider_cannot_invalidate(): void
+    {
+        [$transport, $http] = $this->transport(new Response(401, [], self::TOKEN_INVALID_401));
+
+        try {
+            $transport->request(HttpMethod::Get, 'objects/x');
+            self::fail('Expected an ApiException.');
+        } catch (ApiException $exception) {
+            self::assertSame(401, $exception->statusCode);
+        }
+
+        self::assertCount(1, $http->requests);
+    }
+
     /** @return array{ApiTransport, QueueHttpClient} */
     private function transport(Response $response, ApiConfiguration $configuration = new ApiConfiguration): array
     {
@@ -252,5 +314,12 @@ final class ApiTransportTest extends TestCase
             ),
             $http,
         ];
+    }
+
+    private function transportWith(AccessTokenProvider $tokens, QueueHttpClient $http): ApiTransport
+    {
+        $factory = new HttpFactory;
+
+        return new ApiTransport($tokens, $http, $factory, $factory);
     }
 }
